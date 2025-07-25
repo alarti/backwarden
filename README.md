@@ -1,112 +1,73 @@
-# PortWarden
+## Backwarden
 
+Autor: Alarti
 
-This project creates encrypted backups for [Bitwarden](https://bitwarden.com/) vaults including attachments. It pulls your vault items from [Bitwarden CLI](https://github.com/bitwarden/cli) and download all the attachments associated with those items to a temporary backup folder. Then, portwarden zip that folder, encrypt it with a passphrase, and delete the temporary folder. 
+Este crea copias de seguridad cifradas para bóvedas de [Bitwarden](https://bitwarden.com/), incluyendo los adjuntos. Extrae los elementos de tu bóveda mediante el [CLI de Bitwarden](https://github.com/bitwarden/cli) y descarga todos los adjuntos asociados a una carpeta temporal de respaldo. Luego, Backwarden comprime esa carpeta, la cifra con una contraseña y elimina la carpeta temporal.
 
+Backwarden resuelve la necesidad planteada en el foro de la comunidad ([ver discusión](https://community.bitwarden.com/t/encrypted-export/235)), aunque esperamos que pronto Bitwarden ofrezca una solución oficial.
 
-It addresses this issue in the community forum https://community.bitwarden.com/t/encrypted-export/235, but hopefully Bitwarden will come up with official solutions soon.
+## 28/3/2020 Actualización
 
-## 3/28/20 Update
+Ya es posible restaurar copias de seguridad en cuentas vacías, incluidos los adjuntos.
 
-We now support restoring the backup to an empty account, including attachments.
+## Aviso Legal
 
-# Disclaimer
-Note that you **may lose your data** if you try the restore feature and I am not responsible. Use the free software at your own discretion.  Since we don't handle restoration conflicts,  **make sure to back up with your main account and restore to a spare/alternative account**. 
+Ten en cuenta que **puedes perder tus datos** si utilizas la función de restauración y no me hago responsable de lo que ocurra. Usa este software libre bajo tu propio criterio. Como Backwarden no gestiona conflictos de restauración, **asegúrate de hacer la copia de seguridad con tu cuenta principal y restaurar solo en una cuenta alternativa/suplementaria**.
 
+## Uso del CLI de Backwarden
 
-## Usage Of Portwarden CLI
-
-Go to https://github.com/bitwarden/cli/releases to download the latest version of Bitwarden CLI and place the executable `bw`/`bw.exe` in your `PATH`. Then, go to https://github.com/vwxyzjn/portwarden/releases/ to download the latest release of `portwarden`. Now just follow these steps :
-
-
-```bash
-# If you are running self hosted instance, execute `bw config server https://MYSERVER.COM`
-portwarden --passphrase 1234 --filename backup.portwarden encrypt
-portwarden --passphrase 1234 --filename backup.portwarden decrypt
-# RESTORE IS EXPERIMENTAL!! YOU MAY LOSE YOUR DATA
-# IF YOU RESTORE TO YOUR MAIN ACCOUNT
-# PLEASE MAKE SURE YOU KNOW WHAT YOU ARE DOING
-
-# Please use a **spare** account for restoring backup
-# Portwarden doesn't handle conflicts therefore a
-# separate account is needed
-
-# In fact we setup a check to make sure the account your
-# are restoring to does not have any data in it
-portwarden --passphrase 1234 --filename backup.portwarden restore
-```
-### Demo Backup
-
-![alt text](./imgs/backup.gif "Portwarden CLI Demo")
-
-### Demo Decrypt
-
-![alt text](./imgs/decrypt.gif "Portwarden CLI Demo")
-
-### Demo restore
-
-![alt text](./imgs/restore.gif "Portwarden CLI Demo")
-
-
-## Portwarden Compared with Official Bitwarden Backup (As of 12/5/2018)
-||Portwarden|Official Bitwarden Backup|
-|:---|:---|:---|
-|Backend|golang|C#|
-|Backup Format|:heavy_check_mark: AES-Encrypted `.portwarden` format| Unencrypted CSV file|
-|Backup With Attachments|:heavy_check_mark:|Not supported (see [this feature request](https://community.bitwarden.com/t/allow-attachments-to-be-exported-when-using-export-data))
-|Restore Attachments|:heavy_check_mark: Supported|Not supported|
-
-## Contribution & Development
-
-Clone this repo. Make sure you have [Docker](https://docs.docker.com/install/) installed, ports 8000, 8081, 5000 unused, [Golang](https://golang.org/) installed, [dep](https://golang.github.io/dep/) installed. In addition, create an environment varialble `Salt` of length 30 for encryption salt. Then run 
+Visita https://github.com/bitwarden/cli/releases para descargar la última versión del CLI de Bitwarden y coloca el ejecutable `bw`/`bw.exe` en tu `PATH`. Después, descarga la última versión de Backwarden desde https://github.com/vwxyzjn/portwarden/releases/ (sustituye portwarden por Backwarden). Sigue estos pasos:
 
 ```bash
-dep ensure           # Install go dependencies
-docker-compose up -d # Spin up required containers
+# Si usas una instancia self-hosted, ejecuta:
+bw config server https://MYSERVER.COM
 
-# After the services/containers are created successfully, you should see
-# $ docker-compose up  -d
-# WARNING: Some services (worker) use the 'deploy' key, which will be ignored. Compose does not support 'deploy' configuration - use `docker stack deploy` to deploy to a swarm.
-# Creating network "portwarden_default" with the default driver
-# Creating portwarden_redis_1           ... done
-# Creating portwarden_redis-commander_1 ... done
-# Creating portwarden_frontend_1        ... done
-# Creating portwarden_worker_1          ... done
-# Creating portwarden_scheduler_1       ... done
+backwarden --passphrase 1234 --filename backup.backwarden encrypt
+backwarden --passphrase 1234 --filename backup.backwarden decrypt
+# ¡LA RESTAURACIÓN ES EXPERIMENTAL! PODRÍAS PERDER DATOS
+# SI RESTAURAS EN TU CUENTA PRINCIPAL.
+# ASEGÚRATE DE ENTENDER LOS RIESGOS Y UTILIZA UNA CUENTA ALTERNATIVA.
 
-docker ps # checkout the running containers
-# $ docker ps
-# CONTAINER ID        IMAGE                                   COMMAND                  CREATED             STATUS              PORTS                    NAMES
-# e9bbc7263189        vwxyzjn/portwarden-base:1.1.0           "/bin/bash"              15 seconds ago      Up 12 seconds       0.0.0.0:5000->5000/tcp   portwarden_scheduler_1
-# f44247d80881        vwxyzjn/portwarden-base:1.1.0           "go run main.go"         15 seconds ago      Up 12 seconds       5000/tcp                 portwarden_worker_1
-# 37deb1556391        vwxyzjn/portwarden-frontend:1.0.1       "/bin/sh -c 'npm run…"   17 seconds ago      Up 14 seconds       0.0.0.0:8000->8000/tcp   portwarden_frontend_1
-# 6ab98b5515f1        redis                                   "docker-entrypoint.s…"   17 seconds ago      Up 14 seconds       0.0.0.0:6379->6379/tcp   portwarden_redis_1
-# 78618bb157d2        rediscommander/redis-commander:latest   "/usr/bin/dumb-init …"   17 seconds ago      Up 14 seconds       0.0.0.0:8081->8081/tcp   portwarden_redis-commander_1
+# Backwarden no resuelve conflictos, así que usa una cuenta vacía para restaurar.
 
-docker exec -it portwarden_scheduler_1 bash # get into scheduler container and do whatever you want.
+backwarden --passphrase 1234 --filename backup.backwarden restore
+```
+### Demostración: Respaldo
 
-# $ docker exec -it portwarden_scheduler_1 bash
-# root@582b98fa1a25:/go/src/github.com/vwxyzjn/portwarden/web/scheduler# go run main.go
-# (string) (len=24) "Scheduler Server Started"
-# [GIN-debug] [WARNING] Now Gin requires Go 1.6 or later and Go 1.7 will be required soon.
+![alt text](./imgs/backup.gif "Backwarden CLI Demo")
 
-# [GIN-debug] [WARNING] Creating an Engine instance with the Logger and Recovery middleware already attached.
+### Demostración: Descifrado
 
-# [GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
-#  - using env:   export GIN_MODE=release
-#  - using code:  gin.SetMode(gin.ReleaseMode)
+![alt text](./imgs/decrypt.gif "Backwarden CLI Demo")
 
-# [GIN-debug] GET    /                         --> github.com/vwxyzjn/portwarden/web/scheduler/server.(*PortwardenServer).Run.func1 (4 handlers)
-# [GIN-debug] POST   /decrypt                  --> github.com/vwxyzjn/portwarden/web/scheduler/server.DecryptBackupHandler (4 handlers)
-# [GIN-debug] GET    /gdrive/loginUrl          --> github.com/vwxyzjn/portwarden/web/scheduler/server.(*PortwardenServer).GetGoogleDriveLoginURLHandler-fm (4 handlers)
-# [GIN-debug] GET    /gdrive/login             --> github.com/vwxyzjn/portwarden/web/scheduler/server.(*PortwardenServer).GetGoogleDriveLoginHandler-fm (4 handlers)
-# [GIN-debug] GET    /test/TokenAuthMiddleware --> github.com/vwxyzjn/portwarden/web/scheduler/server.(*PortwardenServer).Run.func2 (5 handlers)
-# [GIN-debug] POST   /encrypt                  --> github.com/vwxyzjn/portwarden/web/scheduler/server.EncryptBackupHandler (5 handlers)
-# [GIN-debug] POST   /encrypt/cancel           --> github.com/vwxyzjn/portwarden/web/scheduler/server.CancelEncryptBackupHandler (5 handlers)
-# [GIN-debug] Listening and serving HTTP on :5000
+### Demostración: Restauración
+
+![alt text](./imgs/restore.gif "Backwarden CLI Demo")
+
+
+## Backwarden comparado con el backup oficial de Bitwarden (a fecha 05/12/2018)
+|              | Backwarden                    | Bitwarden oficial                         |
+|:-------------|:-----------------------------|:------------------------------------------|
+|Backend       | golang                        | C#                                        |
+|Formato backup| :heavy_check_mark: Cifrado AES `.backwarden` | CSV sin cifrar              |
+|Adjuntos      | :heavy_check_mark: Soportado  | No soportado (ver [petición de función](https://community.bitwarden.com/t/allow-attachments-to-be-exported-when-using-export-data)) |
+|Restaurar adjuntos|:heavy_check_mark: Soportado| No soportado                             |
+
+## Contribución y desarrollo
+
+Clona este repositorio. Asegúrate de tener [Docker](https://docs.docker.com/install/), puertos 8000, 8081 y 5000 libres, [Golang](https://golang.org/) y [dep](https://golang.github.io/dep/) instalados. Crea una variable de entorno `Salt` de 30 caracteres para el cifrado. Luego ejecuta:
+
+```bash
+dep ensure           # Instala dependencias Go
+docker-compose up -d # Arranca los contenedores requeridos
+
+docker ps # Comprueba los contenedores activos
+
+docker exec -it backwarden_scheduler_1 bash # Accede al contenedor scheduler
 ```
 
-Notice the `docker-compose.yaml` file defines the services running and it's mounting your current directory as volumes and map it to the container's working directory. This means you can develop/make changes in your local machine, and run it in the container. It also maps certain containers' ports into your host so that you can call the endpoints.
+Observa que el archivo `docker-compose.yaml` define los servicios y mapea tu directorio actual como volumen en el contenedor. Así puedes desarrollar localmente y ejecutar en el entorno aislado. Los puertos estarán accesibles para probar los endpoints.
 
+Las PRs son bienvenidas. Para ideas, podrías añadir una barra de progreso al CLI.
 
-PRs are welcome. For ideas, you could probably add a progress bar to the CLI. 
+[1] chrome://newtab/
